@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Color
 import Data.Author as Author
@@ -24,6 +24,7 @@ import Pages.PagePath exposing (PagePath)
 import Pages.Platform
 import Pages.StaticHttp as StaticHttp
 import Palette
+import Result
 
 
 manifest : Manifest.Config Pages.PathKey
@@ -110,28 +111,54 @@ markdownDocument =
 
 
 type alias Model =
-    {}
+    { username : Maybe String }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model, Cmd.none )
+    ( { username = Nothing }
+    , Cmd.none
+    )
 
 
-type alias Msg =
-    ()
+type Msg
+    = SubmittedLogin
+    | GotAuth (Maybe String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        () ->
-            ( model, Cmd.none )
+        SubmittedLogin ->
+            ( model
+            , login ()
+            )
+
+        GotAuth maybeUsername ->
+            ( { model | username = maybeUsername }
+            , Cmd.none
+            )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    onFissionAuth
+        (\val ->
+            Json.Decode.decodeValue authDecoder val
+                |> Result.toMaybe
+                |> GotAuth
+        )
+
+
+authDecoder : Json.Decode.Decoder String
+authDecoder =
+    Json.Decode.field "username" Json.Decode.string
+
+
+port login : () -> Cmd msg
+
+
+port onFissionAuth : (Json.Decode.Value -> msg) -> Sub msg
 
 
 view :
@@ -149,7 +176,10 @@ view siteMetadata page =
     StaticHttp.succeed
         { view =
             \model viewForPage ->
-                Layout.view (pageView model siteMetadata page viewForPage) page
+                Layout.view
+                    (pageView model siteMetadata page viewForPage)
+                    page
+                    { loginMsg = SubmittedLogin, username = model.username }
         , head = head page.frontmatter
         }
 

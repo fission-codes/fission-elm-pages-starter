@@ -5,6 +5,7 @@ import Element exposing (Element)
 import Element.Background
 import Element.Border
 import Element.Font as Font
+import Element.Input
 import Element.Region
 import Html exposing (Html)
 import Metadata exposing (Metadata)
@@ -21,13 +22,17 @@ view :
         { path : PagePath Pages.PathKey
         , frontmatter : Metadata
         }
+    ->
+        { loginMsg : msg
+        , username : Maybe String
+        }
     -> { title : String, body : Html msg }
-view document page =
+view document page fissionAuth =
     { title = document.title
     , body =
         Element.column
             [ Element.width Element.fill ]
-            [ header page.path
+            [ header page.path fissionAuth
             , Element.column
                 [ Element.padding 30
                 , Element.spacing 40
@@ -46,8 +51,8 @@ view document page =
     }
 
 
-header : PagePath Pages.PathKey -> Element msg
-header currentPath =
+header : PagePath Pages.PathKey -> { loginMsg : msg, username : Maybe String } -> Element msg
+header currentPath fissionAuth =
     Element.column [ Element.width Element.fill ]
         [ Element.el
             [ Element.height (Element.px 4)
@@ -78,7 +83,8 @@ header currentPath =
                         ]
                 }
             , Element.row [ Element.spacing 15 ]
-                [ elmDocsLink
+                [ fissionAuthButton fissionAuth
+                , elmDocsLink
                 , githubRepoLink
                 , highlightableLink currentPath Pages.pages.blog.directory "Blog"
                 ]
@@ -133,4 +139,28 @@ elmDocsLink =
                 , Font.color Palette.color.primary
                 ]
                 { src = ImagePath.toString Pages.images.elmLogo, description = "Elm Package Docs" }
+        }
+
+
+fissionAuthButton : { loginMsg : msg, username : Maybe String } -> Element msg
+fissionAuthButton fissionAuth =
+    Element.Input.button
+        []
+        { onPress = Just fissionAuth.loginMsg
+        , label =
+            Element.row
+                [ Element.spacing 2
+                , Font.size 18
+                ]
+                [ Element.image
+                    [ Element.width (Element.px 26)
+                    ]
+                    { src = ImagePath.toString Pages.images.fission, description = "Login with Fission" }
+                , case fissionAuth.username of
+                    Just username ->
+                        Element.text username
+
+                    Nothing ->
+                        Element.none
+                ]
         }
