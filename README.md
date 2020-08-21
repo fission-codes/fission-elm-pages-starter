@@ -1,4 +1,4 @@
-# elm-pages-starter-fission
+# fission-elm-pages-starter
 
 This repo is an adapted version of the [elm-pages-starter](https://github.com/dillonkearns/elm-pages-starter) that demonstrates Fission auth and storage.
 
