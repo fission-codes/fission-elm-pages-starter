@@ -1,33 +1,21 @@
-# elm-pages-starter
+# elm-pages-starter-fission
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/dillonkearns/elm-pages-starter)
+This repo is an adapted version of the [elm-pages-starter](https://github.com/dillonkearns/elm-pages-starter) that demonstrates Fission auth and storage.
 
-This is an example repo to get you up and running with `elm-pages`.
-
-The entrypoint file is `index.js`. That file imports `src/Main.elm`. The `content` folder is turned into your static pages. The rest is mostly determined by logic in the Elm code! Learn more with the resources below.
+An upcoming guide will describe how Fission auth and storage work in the app. For now, you can see the initial auth implementation on the `auth` branch.
 
 ## Setup Instructions
-Click "Use this template" on this Github page to fork the repo.
 
-Or git clone it:
+Clone the repo
 
 ```
-git clone git@github.com:dillonkearns/elm-pages-starter.git
+git clone git@github.com:bgins/fission-elm-pages-starter.git
 ```
 
-Then install and run the dev server
+Install and run the dev server
 
 ```
 cd elm-pages-starter
 npm install
-npm start # starts a local dev server using `elm-pages develop`
+npm start
 ```
-
-From there you can tweak the `content` folder or change the `src/Main.elm` file.
-
-
-## Learn more about `elm-pages`
-
-- Documentation site: https://elm-pages.com
-- [Elm Package docs](https://package.elm-lang.org/packages/dillonkearns/elm-pages/latest/)
-- [`elm-pages` blog](https://elm-pages.com/blog)
