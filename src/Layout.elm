@@ -155,7 +155,9 @@ fissionAuthButton fissionAuth =
                 [ Element.image
                     [ Element.width (Element.px 26)
                     ]
-                    { src = ImagePath.toString Pages.images.fission, description = "Login with Fission" }
+                    { src = ImagePath.toString Pages.images.fission
+                    , description = "Login with Fission"
+                    }
                 , case fissionAuth.username of
                     Just username ->
                         Element.text username
