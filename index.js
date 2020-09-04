@@ -13,16 +13,29 @@ window.hljs = hljs;
 const { Elm } = require('./src/Main.elm');
 const pagesInit = require('elm-pages');
 
+const fissionInit = {
+  app: {
+    name: 'fission-elm-pages-starter',
+    creator: 'bgins',
+  },
+  fs: {
+    privatePaths: [],
+    publicPaths: [],
+  },
+};
+
 pagesInit({
   mainElmModule: Elm.Main,
 }).then(app => {
-  webnative.initialise().then(async ({ scenario, state }) => {
-    if (scenario.authSucceeded || scenario.continuum) {
-      app.ports.onFissionAuth.send({ username: state.username });
-    }
+  webnative
+    .initialize(fissionInit)
+    .then(async ({ prerequisites, scenario, state }) => {
+      if (scenario.authSucceeded || scenario.continuum) {
+        app.ports.onFissionAuth.send({ username: state.username });
+      }
 
-    app.ports.login.subscribe(() => {
-      webnative.redirectToLobby();
+      app.ports.login.subscribe(() => {
+        webnative.redirectToLobby(prerequisites);
+      });
     });
-  });
 });
