@@ -16,22 +16,62 @@ const pagesInit = require('elm-pages');
 const fissionInit = {
   app: {
     name: 'fission-elm-pages-starter',
-    creator: 'bgins',
+    creator: 'bgins'
   },
   fs: {
     privatePaths: [],
-    publicPaths: [],
-  },
+    publicPaths: []
+  }
 };
 
 pagesInit({
-  mainElmModule: Elm.Main,
+  mainElmModule: Elm.Main
 }).then(app => {
   webnative
     .initialize(fissionInit)
     .then(async ({ prerequisites, scenario, state }) => {
       if (scenario.authSucceeded || scenario.continuum) {
         app.ports.onFissionAuth.send({ username: state.username });
+
+        const fs = state.fs;
+
+        // Create the filesystem if it does not exist
+        const appPath = fs.appPath();
+        const filesystemExists = await fs.exists(appPath);
+
+        if (!filesystemExists) {
+          await fs.mkdir(appPath);
+          await fs.publicise();
+        }
+
+        // Load an annotation or send an empty one
+        app.ports.loadAnnotation.subscribe(async ({ title }) => {
+          const path = fs.appPath(['annotations', `${title}.json`]);
+          if (await fs.exists(path)) {
+            const annotation = JSON.parse(await fs.read(path));
+            app.ports.onFissionAnnotation.send({
+              title: annotation.title,
+              notes: annotation.notes
+            });
+          } else {
+            app.ports.onFissionAnnotation.send({
+              title,
+              notes: ''
+            });
+          }
+        });
+
+        // Save an annotation to the local filesystem and IPFS
+        app.ports.storeAnnotation.subscribe(async annotation => {
+          if (annotation !== null) {
+            const path = fs.appPath([
+              'annotations',
+              `${annotation.title}.json`
+            ]);
+            await fs.write(path, JSON.stringify(annotation));
+            await fs.publicise();
+          }
+        });
       }
 
       app.ports.login.subscribe(() => {

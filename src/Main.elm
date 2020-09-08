@@ -1,5 +1,6 @@
 port module Main exposing (main)
 
+import Annotation exposing (Annotation)
 import Color
 import Data.Author as Author
 import Date
@@ -24,7 +25,6 @@ import Pages.PagePath exposing (PagePath)
 import Pages.Platform
 import Pages.StaticHttp as StaticHttp
 import Palette
-import Result
 
 
 manifest : Manifest.Config Pages.PathKey
@@ -62,7 +62,7 @@ main =
         , documents = [ markdownDocument ]
         , manifest = manifest
         , canonicalSiteUrl = canonicalSiteUrl
-        , onPageChange = Nothing
+        , onPageChange = Just OnPageChange
         , internals = Pages.internals
         }
         |> Pages.Platform.withFileGenerator generateFiles
@@ -111,12 +111,16 @@ markdownDocument =
 
 
 type alias Model =
-    { username : Maybe String }
+    { username : Maybe String
+    , annotation : Annotation
+    }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { username = Nothing }
+    ( { username = Nothing
+      , annotation = Annotation.notEditing
+      }
     , Cmd.none
     )
 
@@ -124,6 +128,14 @@ init =
 type Msg
     = SubmittedLogin
     | GotAuth (Maybe String)
+    | OnPageChange
+        { path : PagePath Pages.PathKey
+        , query : Maybe String
+        , fragment : Maybe String
+        }
+    | LoadAnnotation String
+    | UpdateAnnotation Annotation
+    | GotAnnotation Annotation
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -139,15 +151,42 @@ update msg model =
             , Cmd.none
             )
 
+        OnPageChange _ ->
+            ( { model | annotation = Annotation.notEditing }
+            , Cmd.none
+            )
+
+        LoadAnnotation title ->
+            ( model
+            , loadAnnotation (Annotation.encodeTitle title)
+            )
+
+        UpdateAnnotation annotation ->
+            ( { model | annotation = annotation }
+            , storeAnnotation (Annotation.encode annotation)
+            )
+
+        GotAnnotation annotation ->
+            ( { model | annotation = annotation }
+            , Cmd.none
+            )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    onFissionAuth
-        (\val ->
-            Json.Decode.decodeValue authDecoder val
-                |> Result.toMaybe
-                |> GotAuth
-        )
+    Sub.batch
+        [ onFissionAuth
+            (\val ->
+                Json.Decode.decodeValue authDecoder val
+                    |> Result.toMaybe
+                    |> GotAuth
+            )
+        , onFissionAnnotation
+            (\val ->
+                Annotation.fromValue val
+                    |> GotAnnotation
+            )
+        ]
 
 
 authDecoder : Json.Decode.Decoder String
@@ -159,6 +198,15 @@ port login : () -> Cmd msg
 
 
 port onFissionAuth : (Json.Decode.Value -> msg) -> Sub msg
+
+
+port loadAnnotation : Json.Decode.Value -> Cmd msg
+
+
+port onFissionAnnotation : (Json.Decode.Value -> msg) -> Sub msg
+
+
+port storeAnnotation : Json.Decode.Value -> Cmd msg
 
 
 view :
@@ -180,6 +228,10 @@ view siteMetadata page =
                     (pageView model siteMetadata page viewForPage)
                     page
                     { loginMsg = SubmittedLogin, username = model.username }
+                    { annotation = model.annotation
+                    , onLoadAnnotation = LoadAnnotation
+                    , onUpdateAnnotation = UpdateAnnotation
+                    }
         , head = head page.frontmatter
         }
 

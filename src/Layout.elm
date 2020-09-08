@@ -1,5 +1,6 @@
 module Layout exposing (view)
 
+import Annotation exposing (Annotation)
 import DocumentSvg
 import Element exposing (Element)
 import Element.Background
@@ -26,12 +27,36 @@ view :
         { loginMsg : msg
         , username : Maybe String
         }
+    ->
+        { annotation : Annotation
+        , onLoadAnnotation : String -> msg
+        , onUpdateAnnotation : Annotation -> msg
+        }
     -> { title : String, body : Html msg }
-view document page fissionAuth =
+view document page fissionAuth annotationOptions =
     { title = document.title
     , body =
         Element.column
-            [ Element.width Element.fill ]
+            [ Element.width Element.fill
+            , Element.height Element.fill
+            , Element.inFront <|
+                case fissionAuth.username of
+                    Just username ->
+                        case page.frontmatter of
+                            Metadata.Article metadata ->
+                                Annotation.view
+                                    { annotation = annotationOptions.annotation
+                                    , title = metadata.title
+                                    , onLoadAnnotation = annotationOptions.onLoadAnnotation
+                                    , onUpdateAnnotation = annotationOptions.onUpdateAnnotation
+                                    }
+
+                            _ ->
+                                Element.none
+
+                    Nothing ->
+                        Element.none
+            ]
             [ header page.path fissionAuth
             , Element.column
                 [ Element.padding 30
