@@ -13,6 +13,8 @@ window.hljs = hljs;
 const { Elm } = require('./src/Main.elm');
 const pagesInit = require('elm-pages');
 
+let fs;
+
 const fissionInit = {
   app: {
     name: 'fission-elm-pages-starter',
@@ -33,7 +35,7 @@ pagesInit({
       if (scenario.authSucceeded || scenario.continuum) {
         app.ports.onFissionAuth.send({ username: state.username });
 
-        const fs = state.fs;
+        fs = state.fs;
 
         // Create the filesystem if it does not exist
         const appPath = fs.appPath();
@@ -68,8 +70,9 @@ pagesInit({
               'annotations',
               `${annotation.title}.json`
             ]);
-            await fs.write(path, JSON.stringify(annotation));
-            await fs.publicise();
+            await transaction(fs.write, path, JSON.stringify(annotation));
+            // await fs.write(path, JSON.stringify(annotation));
+            // await fs.publicise();
           }
         });
       }
@@ -79,3 +82,35 @@ pagesInit({
       });
     });
 });
+
+// TRANSACTIONS
+// ⚠️ Will be removed soon
+
+const transactionQueue = [];
+
+/**
+ * Process the next item in the transaction queue.
+ */
+function nextTransaction() {
+  const nextAction = transactionQueue.shift();
+  if (nextAction) setTimeout(nextAction, 16);
+  else fs.publicise();
+}
+
+/**
+ * The Fission filesystem doesn't support parallel writes yet.
+ * This function is a way around that.
+ *
+ * @param method The filesystem method to run
+ * @param methodArguments The arguments for the given filesystem method
+ */
+async function transaction(method, ...methodArguments) {
+  transactionQueue.push(async () => {
+    await method.apply(fs, methodArguments);
+    nextTransaction();
+  });
+
+  if (transactionQueue.length === 1) {
+    nextTransaction();
+  }
+}
