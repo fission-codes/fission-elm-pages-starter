@@ -14,28 +14,31 @@ const { Elm } = require('./src/Main.elm');
 const pagesInit = require('elm-pages');
 
 const fissionInit = {
-  app: {
-    name: 'fission-elm-pages-starter',
-    creator: 'bgins',
-  },
-  fs: {
-    privatePaths: [],
-    publicPaths: [],
-  },
+  permissions: {
+    app: {
+      name: 'fission-elm-pages-starter',
+      creator: 'bgins'
+    }
+  }
 };
 
 pagesInit({
-  mainElmModule: Elm.Main,
+  mainElmModule: Elm.Main
 }).then(app => {
-  webnative
-    .initialize(fissionInit)
-    .then(async ({ prerequisites, scenario, state }) => {
-      if (scenario.authSucceeded || scenario.continuum) {
+  webnative.initialize(fissionInit).then(async state => {
+    switch (state.scenario) {
+      case webnative.Scenario.AuthSucceeded:
+      case webnative.Scenario.Continuation:
         app.ports.onFissionAuth.send({ username: state.username });
-      }
+        break;
 
-      app.ports.login.subscribe(() => {
-        webnative.redirectToLobby(prerequisites);
-      });
+      case webnative.Scenario.NotAuthorised:
+      case webnative.Scenario.AuthCancelled:
+        break;
+    }
+
+    app.ports.login.subscribe(() => {
+      webnative.redirectToLobby(state.permissions);
     });
+  });
 });
