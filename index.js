@@ -41,7 +41,7 @@ pagesInit({
 
         if (!filesystemExists) {
           await fs.mkdir(appPath);
-          await fs.publicise();
+          await fs.publish();
         }
 
         // Load an annotation or send an empty one
@@ -70,7 +70,7 @@ pagesInit({
             ]);
             await transaction(fs.write, path, JSON.stringify(annotation));
             // await fs.write(path, JSON.stringify(annotation));
-            // await fs.publicise();
+            // await fs.publish();
           }
         });
         break;
@@ -97,7 +97,7 @@ const transactionQueue = [];
 function nextTransaction() {
   const nextAction = transactionQueue.shift();
   if (nextAction) setTimeout(nextAction, 16);
-  else fs.publicise();
+  else fs.publish();
 }
 
 /**
