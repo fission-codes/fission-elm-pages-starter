@@ -35,11 +35,11 @@ pagesInit({
 
         fs = state.fs;
 
-        // Create the filesystem if it does not exist
+        // Create the app directory if it does not exist
         const appPath = fs.appPath();
-        const filesystemExists = await fs.exists(appPath);
+        const appDirectoryExists = await fs.exists(appPath);
 
-        if (!filesystemExists) {
+        if (!appDirectoryExists) {
           await fs.mkdir(appPath);
           await fs.publish();
         }
