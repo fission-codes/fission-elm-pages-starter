@@ -90,6 +90,8 @@ view :
     , title : String
     , onLoadAnnotation : String -> msg
     , onUpdateAnnotation : Annotation -> msg
+    , onSaveAnnotation : Annotation -> msg
+    , onCancelAnnotation : msg
     }
     -> Element msg
 view options =
@@ -100,38 +102,77 @@ view options =
                 , Element.alignRight
                 , Element.padding 30
                 ]
-                [ Element.Input.multiline
-                    [ Element.height (Element.px 150)
-                    , Element.width (Element.px 200)
-                    , Border.width 2
-                    , Border.roundEach { topLeft = 15, topRight = 15, bottomLeft = 15, bottomRight = 0 }
+                [ Element.column
+                    [ Border.width 2
+                    , Border.roundEach { topLeft = 12, topRight = 12, bottomLeft = 12, bottomRight = 0 }
                     , Border.color (Element.rgb 0.5 0.5 0.5)
-                    , Element.focused
-                        [ Border.color (Element.rgb 0.3 0.3 0.3)
-                        , Border.shadow
-                            { offset = ( 1, 1 )
-                            , blur = 1
-                            , color = Element.rgb 0.85 0.85 0.85
-                            , size = 1
+                    , Element.padding 3
+                    ]
+                    [ Element.Input.multiline
+                        [ Element.height (Element.px 150)
+                        , Element.width (Element.px 200)
+                        , Font.size 16
+                        , Border.width 0
+                        , Element.focused
+                            [ Border.color (Element.rgb 0.3 0.3 0.3)
+                            , Border.shadow
+                                { offset = ( 0, 0 )
+                                , blur = 0
+                                , color = Element.rgb 0.85 0.85 0.85
+                                , size = 0
+                                }
+                            ]
+                        ]
+                        { onChange =
+                            \newText ->
+                                options.onUpdateAnnotation
+                                    (Editable
+                                        { title = options.title, notes = newText }
+                                    )
+                        , text = annotation.notes
+                        , placeholder =
+                            Just
+                                (Element.Input.placeholder []
+                                    (Element.text ("Write some notes on " ++ options.title))
+                                )
+                        , label = Element.Input.labelHidden ("Notes on " ++ options.title)
+                        , spellcheck = False
+                        }
+                    , Element.row
+                        [ Element.width Element.fill
+                        , Element.paddingXY 15 8
+                        , Element.spacing 18
+                        ]
+                        [ Element.Input.button
+                            [ Element.width Element.fill
+                            , Element.padding 2
+                            , Border.width 1
+                            , Border.rounded 1
+                            , Border.color (Element.rgb255 170 170 170)
+                            , Element.mouseOver
+                                [ Border.color (Element.rgb255 116 56 245)
+                                ]
+                            , Font.size 16
+                            ]
+                            { onPress = Just (options.onSaveAnnotation options.annotation)
+                            , label = Element.row [ Element.centerX ] [ Element.text "Save" ]
+                            }
+                        , Element.Input.button
+                            [ Element.width Element.fill
+                            , Element.padding 2
+                            , Border.width 1
+                            , Border.rounded 1
+                            , Border.color (Element.rgb255 170 170 170)
+                            , Element.mouseOver
+                                [ Border.color (Element.rgb255 116 56 245)
+                                ]
+                            , Font.size 16
+                            ]
+                            { onPress = Just options.onCancelAnnotation
+                            , label = Element.row [ Element.centerX ] [ Element.text "Cancel" ]
                             }
                         ]
-                    , Font.size 16
                     ]
-                    { onChange =
-                        \newText ->
-                            options.onUpdateAnnotation
-                                (Editable
-                                    { title = options.title, notes = newText }
-                                )
-                    , text = annotation.notes
-                    , placeholder =
-                        Just
-                            (Element.Input.placeholder []
-                                (Element.text ("Write some notes on " ++ options.title))
-                            )
-                    , label = Element.Input.labelHidden ("Notes on " ++ options.title)
-                    , spellcheck = False
-                    }
                 ]
 
         NotEditing ->

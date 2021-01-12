@@ -31,6 +31,8 @@ view :
         { annotation : Annotation
         , onLoadAnnotation : String -> msg
         , onUpdateAnnotation : Annotation -> msg
+        , onSaveAnnotation : Annotation -> msg
+        , onCancelAnnotation : msg
         }
     -> { title : String, body : Html msg }
 view document page fissionAuth annotationOptions =
@@ -49,6 +51,8 @@ view document page fissionAuth annotationOptions =
                                     , title = metadata.title
                                     , onLoadAnnotation = annotationOptions.onLoadAnnotation
                                     , onUpdateAnnotation = annotationOptions.onUpdateAnnotation
+                                    , onSaveAnnotation = annotationOptions.onSaveAnnotation
+                                    , onCancelAnnotation = annotationOptions.onCancelAnnotation
                                     }
 
                             _ ->

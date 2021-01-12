@@ -134,8 +134,10 @@ type Msg
         , fragment : Maybe String
         }
     | LoadAnnotation String
-    | UpdateAnnotation Annotation
     | GotAnnotation Annotation
+    | UpdateAnnotation Annotation
+    | SaveAnnotation Annotation
+    | CancelAnnotation
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -161,13 +163,23 @@ update msg model =
             , loadAnnotation (Annotation.encodeTitle title)
             )
 
+        GotAnnotation annotation ->
+            ( { model | annotation = annotation }
+            , Cmd.none
+            )
+
         UpdateAnnotation annotation ->
             ( { model | annotation = annotation }
+            , Cmd.none
+            )
+
+        SaveAnnotation annotation ->
+            ( { model | annotation = Annotation.notEditing }
             , storeAnnotation (Annotation.encode annotation)
             )
 
-        GotAnnotation annotation ->
-            ( { model | annotation = annotation }
+        CancelAnnotation ->
+            ( { model | annotation = Annotation.notEditing }
             , Cmd.none
             )
 
@@ -231,6 +243,8 @@ view siteMetadata page =
                     { annotation = model.annotation
                     , onLoadAnnotation = LoadAnnotation
                     , onUpdateAnnotation = UpdateAnnotation
+                    , onSaveAnnotation = SaveAnnotation
+                    , onCancelAnnotation = CancelAnnotation
                     }
         , head = head page.frontmatter
         }
