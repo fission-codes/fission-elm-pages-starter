@@ -25,6 +25,7 @@ import Pages.Platform
 import Pages.StaticHttp as StaticHttp
 import Palette
 import Result
+import Webnative exposing (Artifact(..), DecodedResponse(..), State(..))
 
 
 manifest : Manifest.Config Pages.PathKey
@@ -114,16 +115,28 @@ type alias Model =
     { username : Maybe String }
 
 
+permissions : Webnative.Permissions
+permissions =
+    { app =
+        Just
+            { creator = "bgins"
+            , name = "fission-elm-pages-starter"
+            }
+    , fs = Nothing
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
     ( { username = Nothing }
-    , Cmd.none
+    , webnativeRequest <|
+        Webnative.init permissions
     )
 
 
 type Msg
     = SubmittedLogin
-    | GotAuth (Maybe String)
+    | GotWebnativeResponse Webnative.Response
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -131,31 +144,61 @@ update msg model =
     case msg of
         SubmittedLogin ->
             ( model
-            , login ()
+            , webnativeRequest <|
+                Webnative.redirectToLobby
+                    Webnative.CurrentUrl
+                    permissions
             )
 
-        GotAuth maybeUsername ->
-            ( { model | username = maybeUsername }
-            , Cmd.none
-            )
+        GotWebnativeResponse response ->
+            case Webnative.decodeResponse tagFromString response of
+                Webnative (Initialisation state) ->
+                    case state of
+                        AuthSucceeded authState ->
+                            ( { model | username = Just authState.username }
+                            , Cmd.none
+                            )
+
+                        Continuation authState ->
+                            ( { model | username = Just authState.username }
+                            , Cmd.none
+                            )
+
+                        AuthCancelled cancelledState ->
+                            -- cancelledState gives a reason for cancellation
+                            ( model, Cmd.none )
+
+                        NotAuthorised ->
+                            -- initial state for a new user
+                            ( model, Cmd.none )
+
+                WebnativeError err ->
+                    -- error responses including unsupported browsers
+                    -- and insecure contexts
+                    ( model, Cmd.none )
+
+                _ ->
+                    -- WNFS filesystem responses
+                    -- see the store branch for an example
+                    ( model, Cmd.none )
+
+
+tagFromString : String -> Result String String
+tagFromString =
+    -- tags associate WNFS requests and responses
+    -- see the store branch for an example
+    \_ -> Ok "none"
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    onFissionAuth
-        (\val ->
-            Json.Decode.decodeValue authDecoder val
-                |> Result.toMaybe
-                |> GotAuth
-        )
+    webnativeResponse GotWebnativeResponse
 
 
-authDecoder : Json.Decode.Decoder String
-authDecoder =
-    Json.Decode.field "username" Json.Decode.string
+port webnativeRequest : Webnative.Request -> Cmd msg
 
 
-port login : () -> Cmd msg
+port webnativeResponse : (Webnative.Response -> msg) -> Sub msg
 
 
 port onFissionAuth : (Json.Decode.Value -> msg) -> Sub msg
