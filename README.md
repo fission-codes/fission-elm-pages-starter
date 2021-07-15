@@ -1,3 +1,9 @@
+[![Built by FISSION](https://img.shields.io/badge/⌘-Built_by_FISSION-purple.svg)](https://fission.codes)
+[![Built by FISSION](https://img.shields.io/badge/webnative-v0.21.3-purple.svg )](https://github.com/fission-suite/webnative)
+[![Discord](https://img.shields.io/discord/478735028319158273.svg)](https://discord.gg/zAQBDEq)
+[![Discourse](https://img.shields.io/discourse/https/talk.fission.codes/topics)](https://talk.fission.codes)
+
+
 # fission-elm-pages-starter
 
 This repo is an adapted version of the [elm-pages-starter](https://github.com/dillonkearns/elm-pages-starter) that demonstrates Fission auth and storage.
